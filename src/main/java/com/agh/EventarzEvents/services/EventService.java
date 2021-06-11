@@ -6,101 +6,104 @@ import com.agh.EventarzEvents.model.Event;
 import com.agh.EventarzEvents.model.EventForm;
 import com.agh.EventarzEvents.model.Participant;
 import com.agh.EventarzEvents.repositories.EventRepository;
-import com.agh.EventarzEvents.repositories.ParticipantRepository;
-import io.github.resilience4j.retry.annotation.Retry;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class EventService {
 
-    @Autowired
-    private EventRepository eventRepository;
-    @Autowired
-    private ParticipantRepository participantRepository;
+    private final EventRepository eventRepository;
 
-    @Retry(name = "getEventByUuidRetry")
+    public EventService(EventRepository eventRepository) {
+        this.eventRepository = eventRepository;
+    }
+
     public Event getEventByUuid(String uuid) throws EventNotFoundException {
         Event event = eventRepository.findByUuid(uuid);
         if (event == null) {
             throw new EventNotFoundException("Event " + uuid + " not found!");
         }
-        // TODO: This has to be done on Gateway to notify Groups
-//        event = handleEventExpiration(event);
-//        if (event == null) {
-//            throw new EventNotFoundException("Event " + uuid + " not found!");
-//        }
+        event = handleEventExpiration(event);
+        if (event == null) {
+            throw new EventNotFoundException("Event " + uuid + " not found!");
+        }
         return event;
     }
 
-    @Retry(name = "getEventsByUuidListRetry")
     public List<Event> getEventsByUuidList(String[] uuids) {
         List<Event> events = eventRepository.findByUuidIn(Arrays.asList(uuids));
         return events;
     }
 
-    @Retry(name = "getMyEventsRetry")
     public List<Event> getMyEvents(String username) {
         // TODO: This should be doable in one query but it didn't work for some reason.
         List<Event> organizedEvents = eventRepository.findOrganizedEvents(username);
         List<Event> joinedEvents = eventRepository.findJoinedEvents(username);
         List<Event> events = new ArrayList<>(organizedEvents);
-        events.addAll(joinedEvents);
-        // TODO: This has to be done on Gateway to notify Groups
-//        events = handleEventExpiration(events);
-//        events.sort(Event::compareEventDates);
+        List<String> organizedEventUuids = new ArrayList<>();
+        for (Event event : organizedEvents) {
+            organizedEventUuids.add(event.getUuid());
+        }
+        for (Event event : joinedEvents) {
+            if (!organizedEventUuids.contains(event.getUuid())) {
+                events.add(event);
+            }
+        }
+        events = handleEventExpiration(events);
+        events.sort(Event::compareEventDates);
         return events;
     }
 
-    @Retry(name = "getOrganizedEventsRetry")
     public List<Event> getOrganizedEvents(String username) {
         List<Event> events = eventRepository.findOrganizedEvents(username);
-        // TODO: This has to be done on Gateway to notify Groups
-//        events = handleEventExpiration(events);
-//        events.sort(Event::compareEventDates);
+        events = handleEventExpiration(events);
+        events.sort(Event::compareEventDates);
         return events;
     }
 
-    @Retry(name = "getJoinedEventsRetry")
     public List<Event> getJoinedEvents(String username) {
         List<Event> events = eventRepository.findJoinedEvents(username);
-        // TODO: This has to be done on Gateway to notify Groups
-//        events = handleEventExpiration(events);
-//        events.sort(Event::compareEventDates);
+        events = handleEventExpiration(events);
+        events.sort(Event::compareEventDates);
         return events;
     }
 
-    @Retry(name = "getHomeEventsRetry")
     public List<Event> getHomeEvents(String username) {
         List<Event> events = eventRepository.findOrganizedEvents(username);
         events = extractUpcomingEvents(events);
-        // TODO: This has to be done on Gateway to notify Groups
-//        events = handleEventExpiration(events);
-//        events.sort(Event::compareEventDates);
+        events = handleEventExpiration(events);
+        events.sort(Event::compareEventDates);
         return events;
     }
 
-    @Retry(name = "getEventsByNameRetry")
     public List<Event> getEventsByName(String name) {
         List<Event> events = eventRepository.findByNameLikeIgnoreCase(name);
-        // TODO: This has to be done on Gateway to notify Groups
-//        events = handleEventExpiration(events);
-//        events.sort(Event::compareEventDates);
+        events = handleEventExpiration(events);
+        events.sort(Event::compareEventDates);
         return events;
     }
 
-    @Retry(name = "getEventsByGroupUuid")
     public List<Event> getEventsByGroupUuid(String groupUuid) {
         List<Event> events = eventRepository.findByGroupUuid(groupUuid);
+        events = handleEventExpiration(events);
+        events.sort(Event::compareEventDates);
         return events;
     }
 
-    @Retry(name = "createEventRetry")
+    public Map<String, Integer> getEventCountsByGroupUuids(String[] groupUuids) {
+        Map<String, Integer> counts = new HashMap<>();
+        for (String groupUuid : groupUuids) {
+            counts.put(groupUuid, eventRepository.getEventCountByGroupUuid(groupUuid));
+        }
+        return counts;
+    }
+
     public Event createEvent(EventForm eventForm) {
         Event event = new Event(eventForm);
         if (eventForm.isParticipate()) {
@@ -110,9 +113,14 @@ public class EventService {
         return event;
     }
 
+    public void deleteEventsByGroupUuid(String groupUuid) {
+        // TODO: delete directly in DB?
+        List<Event> events = eventRepository.findByGroupUuid(groupUuid);
+        eventRepository.deleteAll(events);
+    }
+
     // TODO: Make resilience4j ignore not founds here so it returns quickly
 
-    @Retry(name = "updateEventRetry")
     public Event updateEvent(String uuid, EventForm eventForm) throws EventNotFoundException {
         Event event = eventRepository.findByUuid(uuid);
         if (event == null) {
@@ -134,7 +142,6 @@ public class EventService {
         return event;
     }
 
-    @Retry(name = "getGroupUuid")
     public String getGroupUuid(String uuid) throws EventNotFoundException {
         String groupUuid = eventRepository.findGroupUuidByUuid(uuid);
         if (groupUuid == null) {
@@ -143,7 +150,6 @@ public class EventService {
         return groupUuid;
     }
 
-    @Retry(name = "joinEventRetry")
     public Event joinEvent(String uuid, String username) throws EventNotFoundException, EventFullException {
         Event event = eventRepository.findByUuid(uuid);
         if (event == null) {
@@ -155,7 +161,6 @@ public class EventService {
         return event;
     }
 
-    @Retry(name = "leaveEventRetry")
     public Event leaveEvent(String uuid, String username) throws EventNotFoundException {
         Event event = eventRepository.findByUuid(uuid);
         if (event == null) {
@@ -167,7 +172,6 @@ public class EventService {
         return event;
     }
 
-    @Retry(name = "removeUserFromEventsByGroupUuidRetry")
     public void removeUserFromEventsByGroupUuid(String groupUuid, String username) {
         List<Event> events = eventRepository.findByGroupUuid(groupUuid);
         for (Event event : events) {
@@ -178,7 +182,6 @@ public class EventService {
         }
     }
 
-    @Retry(name = "deleteEventsRetry")
     public void deleteEvents(String[] uuids) {
         eventRepository.deleteByUuidIn(Arrays.asList(uuids));
     }
@@ -193,30 +196,28 @@ public class EventService {
         return upcomingEvents;
     }
 
-    // TODO: This has to be done on Gateway to notify Groups
-//    private Event handleEventExpiration(Event event) {
-//        // This, the other handleEventExpiration method and the similar methods in GroupService mutate their arguments, unfortunately
-//        event.checkEventDate();
-//        if (event.isExpired()) {
-//            eventRepository.deleteByUuid(event.getUuid());
-//            return null;
-//        } else {
-//            return event;
-//        }
-//    }
-//
-//    private List<Event> handleEventExpiration(List<Event> events) {
-//        List<Event> eventsToDelete = new ArrayList<>();
-//        List<Event> modifiedEvents = new ArrayList<>();
-//        for (Event event : events) {
-//            event.checkEventDate();
-//            if (event.isExpired()) {
-//                eventsToDelete.add(event);
-//            } else {
-//                modifiedEvents.add(event);
-//            }
-//        }
-//        eventRepository.deleteAll(eventsToDelete);
-//        return modifiedEvents;
-//    }
+    private Event handleEventExpiration(Event event) {
+        event.checkEventDate();
+        if (event.isExpired()) {
+            eventRepository.delete(event);
+            return null;
+        } else {
+            return event;
+        }
+    }
+
+    private List<Event> handleEventExpiration(List<Event> events) {
+        List<Event> eventsToDelete = new ArrayList<>();
+        List<Event> modifiedEvents = new ArrayList<>();
+        for (Event event : events) {
+            event.checkEventDate();
+            if (event.isExpired()) {
+                eventsToDelete.add(event);
+            } else {
+                modifiedEvents.add(event);
+            }
+        }
+        eventRepository.deleteAll(eventsToDelete);
+        return modifiedEvents;
+    }
 }

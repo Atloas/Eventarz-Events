@@ -36,16 +36,20 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class EventController {
 
     // TODO: ControllerAdvice for all those exceptions
 
-    @Autowired
-    private EventService eventService;
+    private final EventService eventService;
 
     private final static Logger log = LoggerFactory.getLogger(EventarzEventsApplication.class);
+
+    public EventController(EventService eventService) {
+        this.eventService = eventService;
+    }
 
     @GetMapping(value = "/events", params = {"organizerUsername"})
     public List<Event> getFoundedEvents(@RequestParam String organizerUsername) {
@@ -82,6 +86,11 @@ public class EventController {
         return eventService.getEventsByGroupUuid(groupUuid);
     }
 
+    @GetMapping(value = "/events", params = {"groupUuids", "counts"})
+    public Map<String, Integer> getEventCountsByGroupUuids(@RequestParam String[] groupUuids) {
+        return eventService.getEventCountsByGroupUuids(groupUuids);
+    }
+
     @PostMapping(value = "/events")
     public Event createEvent(@RequestBody EventForm eventForm) {
         return eventService.createEvent(eventForm);
@@ -103,6 +112,11 @@ public class EventController {
         } catch (EventNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found!", e);
         }
+    }
+
+    @DeleteMapping(value = "/events", params = {"groupUuid"})
+    public void deleteEventsByGroupUuid(@RequestParam String groupUuid) {
+        eventService.deleteEventsByGroupUuid(groupUuid);
     }
 
     @DeleteMapping(value = "/events", params = {"groupUuid", "username"})
