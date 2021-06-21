@@ -18,3 +18,38 @@ logging:
 server:
   error:
     includeMessage: always
+
+resilience4j:
+  circuitbreaker:
+    #   This and the similar setting under retry makes an open circuit breaker fail before retry has a go, which is good.
+    #   Also means that it counts a retry as one request, no matter how many it actually tried, so I lowered request counts here.
+    circuitBreakerAspectOrder: 1
+    configs:
+      default:
+        registerHealthIndicator: true
+        #       In seconds for slidingWindowType: TIME_BASED
+        slidingWindowSize: 60
+        permittedNumberOfCallsInHalfOpenState: 1
+        slidingWindowType: TIME_BASED
+        minimumNumberOfCalls: 3
+        waitDurationInOpenState: 50s
+        failureRateThreshold: 60
+        ignoreExceptions:
+          - com.agh.EventarzEvents.exceptions.EventFullException
+          - com.agh.EventarzEvents.exceptions.EventNotFoundException
+    instances:
+      EventServiceCircuitBreaker:
+        baseConfig: default
+  retry:
+    retryAspectOrder: 2
+    configs:
+      default:
+        registerHealthIndicator: true
+        maxAttempts: 2
+        waitDuration: 5s
+        ignoreExceptions:
+          - com.agh.EventarzEvents.exceptions.EventFullException
+          - com.agh.EventarzEvents.exceptions.EventNotFoundException
+    instances:
+      EventServiceRetry:
+        baseConfig: default

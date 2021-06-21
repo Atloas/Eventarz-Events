@@ -6,6 +6,8 @@ import com.agh.EventarzEvents.model.Event;
 import com.agh.EventarzEvents.model.EventForm;
 import com.agh.EventarzEvents.model.Participant;
 import com.agh.EventarzEvents.repositories.EventRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Retry(name = "EventServiceRetry")
+@CircuitBreaker(name = "EventServiceCircuitBreaker")
 public class EventService {
 
     private final EventRepository eventRepository;
@@ -83,7 +87,7 @@ public class EventService {
     }
 
     public List<Event> getEventsByName(String name) {
-        List<Event> events = eventRepository.findByNameLikeIgnoreCase(name);
+        List<Event> events = eventRepository.findByNameLikeIgnoreCase("%" + name + "%");
         events = handleEventExpiration(events);
         events.sort(Event::compareEventDates);
         return events;
