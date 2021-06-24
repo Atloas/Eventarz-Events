@@ -9,6 +9,7 @@ import com.agh.EventarzEvents.repositories.EventRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ public class EventService {
         this.eventRepository = eventRepository;
     }
 
+    @Transactional(readOnly = true)
     public Event getEventByUuid(String uuid) throws EventNotFoundException {
         Event event = eventRepository.findByUuid(uuid);
         if (event == null) {
@@ -40,11 +42,13 @@ public class EventService {
         return event;
     }
 
+    @Transactional(readOnly = true)
     public List<Event> getEventsByUuidList(String[] uuids) {
         List<Event> events = eventRepository.findByUuidIn(Arrays.asList(uuids));
         return events;
     }
 
+    @Transactional(readOnly = true)
     public List<Event> getMyEvents(String username) {
         // TODO: This should be doable in one query but it didn't work for some reason.
         List<Event> organizedEvents = eventRepository.findOrganizedEvents(username);
@@ -64,6 +68,7 @@ public class EventService {
         return events;
     }
 
+    @Transactional(readOnly = true)
     public List<Event> getOrganizedEvents(String username) {
         List<Event> events = eventRepository.findOrganizedEvents(username);
         events = handleEventExpiration(events);
@@ -71,6 +76,7 @@ public class EventService {
         return events;
     }
 
+    @Transactional(readOnly = true)
     public List<Event> getJoinedEvents(String username) {
         List<Event> events = eventRepository.findJoinedEvents(username);
         events = handleEventExpiration(events);
@@ -78,6 +84,7 @@ public class EventService {
         return events;
     }
 
+    @Transactional(readOnly = true)
     public List<Event> getHomeEvents(String username) {
         List<Event> events = eventRepository.findOrganizedEvents(username);
         events = extractUpcomingEvents(events);
@@ -86,6 +93,7 @@ public class EventService {
         return events;
     }
 
+    @Transactional(readOnly = true)
     public List<Event> getEventsByName(String name) {
         List<Event> events = eventRepository.findByNameLikeIgnoreCase("%" + name + "%");
         events = handleEventExpiration(events);
@@ -93,6 +101,7 @@ public class EventService {
         return events;
     }
 
+    @Transactional(readOnly = true)
     public List<Event> getEventsByGroupUuid(String groupUuid) {
         List<Event> events = eventRepository.findByGroupUuid(groupUuid);
         events = handleEventExpiration(events);
@@ -100,6 +109,7 @@ public class EventService {
         return events;
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Integer> getEventCountsByGroupUuids(String[] groupUuids) {
         Map<String, Integer> counts = new HashMap<>();
         for (String groupUuid : groupUuids) {
@@ -108,6 +118,7 @@ public class EventService {
         return counts;
     }
 
+    @Transactional
     public Event createEvent(EventForm eventForm) {
         Event event = new Event(eventForm);
         if (eventForm.isParticipate()) {
@@ -117,14 +128,14 @@ public class EventService {
         return event;
     }
 
+    @Transactional
     public void deleteEventsByGroupUuid(String groupUuid) {
         // TODO: delete directly in DB?
         List<Event> events = eventRepository.findByGroupUuid(groupUuid);
         eventRepository.deleteAll(events);
     }
 
-    // TODO: Make resilience4j ignore not founds here so it returns quickly
-
+    @Transactional
     public Event updateEvent(String uuid, EventForm eventForm) throws EventNotFoundException {
         Event event = eventRepository.findByUuid(uuid);
         if (event == null) {
@@ -146,6 +157,7 @@ public class EventService {
         return event;
     }
 
+    @Transactional(readOnly = true)
     public String getGroupUuid(String uuid) throws EventNotFoundException {
         String groupUuid = eventRepository.findGroupUuidByUuid(uuid);
         if (groupUuid == null) {
@@ -154,6 +166,7 @@ public class EventService {
         return groupUuid;
     }
 
+    @Transactional
     public Event joinEvent(String uuid, String username) throws EventNotFoundException, EventFullException {
         Event event = eventRepository.findByUuid(uuid);
         if (event == null) {
@@ -165,6 +178,7 @@ public class EventService {
         return event;
     }
 
+    @Transactional
     public Event leaveEvent(String uuid, String username) throws EventNotFoundException {
         Event event = eventRepository.findByUuid(uuid);
         if (event == null) {
@@ -176,6 +190,7 @@ public class EventService {
         return event;
     }
 
+    @Transactional
     public void removeUserFromEventsByGroupUuid(String groupUuid, String username) {
         List<Event> events = eventRepository.findByGroupUuid(groupUuid);
         for (Event event : events) {
@@ -186,6 +201,7 @@ public class EventService {
         }
     }
 
+    @Transactional
     public void deleteEvents(String[] uuids) {
         eventRepository.deleteByUuidIn(Arrays.asList(uuids));
     }

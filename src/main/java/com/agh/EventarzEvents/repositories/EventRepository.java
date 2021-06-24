@@ -1,8 +1,6 @@
 package com.agh.EventarzEvents.repositories;
 
 import com.agh.EventarzEvents.model.Event;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -12,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Repository
-@Transactional(readOnly = true)
 public interface EventRepository extends CrudRepository<Event, String> {
 
     Event findByUuid(String uuid);
