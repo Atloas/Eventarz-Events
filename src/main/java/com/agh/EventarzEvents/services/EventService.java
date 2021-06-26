@@ -130,9 +130,7 @@ public class EventService {
 
     @Transactional
     public void deleteEventsByGroupUuid(String groupUuid) {
-        // TODO: delete directly in DB?
-        List<Event> events = eventRepository.findByGroupUuid(groupUuid);
-        eventRepository.deleteAll(events);
+        eventRepository.deleteByGroupUuid(groupUuid);
     }
 
     @Transactional
@@ -152,7 +150,7 @@ public class EventService {
         if (clearParticipants) {
             event.getParticipants().clear();
         }
-        // Not necessary according to my tests, but I'm leaving it in
+        // Not necessary according to my tests, but I'm leaving it in for consistency with join/leave
         event = eventRepository.save(event);
         return event;
     }

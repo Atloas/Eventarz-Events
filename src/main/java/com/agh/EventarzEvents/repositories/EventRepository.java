@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -26,11 +25,14 @@ public interface EventRepository extends CrudRepository<Event, String> {
     @Query("SELECT COUNT(*) FROM event e WHERE e.groupUuid = :groupUuid")
     int getEventCountByGroupUuid(String groupUuid);
 
-    @Transactional
+    @Modifying
     void deleteByUuid(String uuid);
 
-    @Transactional
+    @Modifying
     void deleteByUuidIn(List<String> uuids);
+
+    @Modifying
+    void deleteByGroupUuid(String groupUuid);
 
     @Query("SELECT e FROM event e WHERE e.organizerUsername = :username")
     List<Event> findOrganizedEvents(String username);
@@ -38,7 +40,6 @@ public interface EventRepository extends CrudRepository<Event, String> {
     @Query("FROM event e INNER JOIN e.participants ep WHERE ep.username = :username")
     List<Event> findJoinedEvents(String username);
 
-    @Transactional
     @Modifying
     @Query("DELETE FROM event e WHERE e.groupUuid = :groupUuid AND e.organizerUsername = :username")
     void deleteFromGroupByOrganizerUsername(String groupUuid, String username);

@@ -16,15 +16,11 @@
 package com.agh.EventarzEvents.controllers;
 
 import com.agh.EventarzEvents.EventarzEventsApplication;
-import com.agh.EventarzEvents.exceptions.EventFullException;
-import com.agh.EventarzEvents.exceptions.EventNotFoundException;
 import com.agh.EventarzEvents.model.Event;
 import com.agh.EventarzEvents.model.EventForm;
 import com.agh.EventarzEvents.services.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,15 +29,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
 public class EventController {
-
-    // TODO: ControllerAdvice for all those exceptions
 
     private final EventService eventService;
 
@@ -98,20 +91,12 @@ public class EventController {
 
     @GetMapping(value = "/events/{uuid}")
     public Event getEventByUuid(@PathVariable String uuid) {
-        try {
-            return eventService.getEventByUuid(uuid);
-        } catch (EventNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found!", e);
-        }
+        return eventService.getEventByUuid(uuid);
     }
 
     @PutMapping(value = "/events/{uuid}")
     public Event updateEvent(@PathVariable String uuid, @RequestBody EventForm eventForm) {
-        try {
-            return eventService.updateEvent(uuid, eventForm);
-        } catch (EventNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found!", e);
-        }
+        return eventService.updateEvent(uuid, eventForm);
     }
 
     @DeleteMapping(value = "/events", params = {"groupUuid"})
@@ -131,30 +116,16 @@ public class EventController {
 
     @GetMapping(value = "/events/{uuid}/groupUuid")
     public String getGroupUuid(@PathVariable String uuid) {
-        try {
-            return eventService.getGroupUuid(uuid);
-        } catch (EventNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found!", e);
-        }
+        return eventService.getGroupUuid(uuid);
     }
 
     @PostMapping(value = "/events/{uuid}/participants")
     public Event joinEvent(@PathVariable String uuid, @RequestBody String username) {
-        try {
-            return eventService.joinEvent(uuid, username);
-        } catch (EventNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found!", e);
-        } catch (EventFullException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Event already full!", e);
-        }
+        return eventService.joinEvent(uuid, username);
     }
 
     @DeleteMapping(value = "/events/{uuid}/participants/{username}")
     public Event leaveEvent(@PathVariable String uuid, @PathVariable String username) {
-        try {
-            return eventService.leaveEvent(uuid, username);
-        } catch (EventNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found!", e);
-        }
+        return eventService.leaveEvent(uuid, username);
     }
 }
