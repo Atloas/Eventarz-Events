@@ -1,7 +1,7 @@
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://ec2-3-143-218-33.us-east-2.compute.amazonaws.com:8761/eureka
+      defaultZone: http://eventarz-eureka:8761/eureka
 
 server:
   port: 8080

@@ -6,7 +6,7 @@ metadata:
     app: eventarz-events
   name: eventarz-events
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: eventarz-events
@@ -18,7 +18,7 @@ spec:
         app: eventarz-events
     spec:
       containers:
-        - image: eventarzregistry.azurecr.io/eventarz-events:latest
+        - image: eventarzcontainerregistry.azurecr.io/eventarz-events:latest
           name: eventarz-events
           resources: {}
 status: {}
