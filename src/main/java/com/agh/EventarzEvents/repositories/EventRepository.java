@@ -23,7 +23,7 @@ public interface EventRepository extends CrudRepository<Event, String> {
     List<Event> findByGroupUuid(String groupUuid);
 
     @Query("SELECT COUNT(*) FROM event e WHERE e.groupUuid = :groupUuid")
-    int getEventCountByGroupUuid(String groupUuid);
+    int findEventCountByGroupUuid(String groupUuid);
 
     @Modifying
     void deleteByUuid(String uuid);

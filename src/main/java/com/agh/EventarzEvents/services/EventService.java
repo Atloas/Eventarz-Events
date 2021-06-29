@@ -113,7 +113,7 @@ public class EventService {
     public Map<String, Integer> getEventCountsByGroupUuids(String[] groupUuids) {
         Map<String, Integer> counts = new HashMap<>();
         for (String groupUuid : groupUuids) {
-            counts.put(groupUuid, eventRepository.getEventCountByGroupUuid(groupUuid));
+            counts.put(groupUuid, eventRepository.findEventCountByGroupUuid(groupUuid));
         }
         return counts;
     }
