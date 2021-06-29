@@ -15,6 +15,10 @@ logging:
   level:
     org.hibernate.SQL: DEBUG
 
+eureka:
+  instance:
+    preferIpAddress: true
+
 server:
   error:
     includeMessage: always
