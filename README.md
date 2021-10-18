@@ -1,6 +1,6 @@
 # Eventarz-Events
 
-A part of my Master's dissertation - a simple web application for organizing events, consisting of 7 microservices:
+A part of my Master's thesis - a simple web application for organizing events, consisting of 7 microservices:
 
 - [Eventarz-Gateway](https://github.com/Atloas/Eventarz-Gateway) - contains full project description.
 - [Eventarz-Application](https://github.com/Atloas/Eventarz-Application)
